@@ -25,12 +25,12 @@ fun AppNavigation(repository: GameRepository, navController: NavHostController =
             val viewModel = MainViewModel(repository)
             MainScreen(viewModel = viewModel, onNavigateToGame = {gameId -> navController.navigate(Screen.Game.createRoute(gameId))})
         }
-        composable(route = Screen.Game.route, arguments = listOf(navArgument("gameId") {type = NavType.StringType})) { backStackEntry ->
+        composable(route = Screen.Game.route, arguments = listOf(navArgument("gameId") {type = NavType.StringType})) {backStackEntry ->
             val gameId = backStackEntry.arguments?.getString("gameId") ?: return@composable
             val viewModel = GameViewModel(repository, gameId)
-            GameScreen(viewModel = viewModel, onNavigateBack = { navController.popBackStack() }, onNavigateToHistory = {navController.navigate(Screen.RoundHistory.createRoute(gameId))}, repository = repository)
+            GameScreen(viewModel = viewModel, onNavigateBack = {navController.popBackStack()}, onNavigateToHistory = {navController.navigate(Screen.RoundHistory.createRoute(gameId))}, repository = repository)
         }
-        composable(route = Screen.RoundHistory.route, arguments = listOf(navArgument("gameId") {type = NavType.StringType})) { backStackEntry ->
+        composable(route = Screen.RoundHistory.route, arguments = listOf(navArgument("gameId") {type = NavType.StringType})) {backStackEntry ->
             val gameId = backStackEntry.arguments?.getString("gameId") ?: return@composable
             RoundHistoryScreen(repository = repository, gameId = gameId, onNavigateBack = {navController.popBackStack()})
         }
