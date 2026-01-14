@@ -38,7 +38,7 @@ fun MainScreen(viewModel: MainViewModel, onNavigateToGame: (String) -> Unit) {
                     Text("Active Games", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(16.dp))
                 }
                 items(activeGames, key = {it.game.id}) {gameWithPlayers ->
-                    GameRow(gameWithPlayers = gameWithPlayers, onClick = {gameWithPlayers.game.id})
+                    GameRow(gameWithPlayers = gameWithPlayers, onClick = {onNavigateToGame(gameWithPlayers.game.id)})
                 }
             }
             if (completedGames.isNotEmpty()) {
