@@ -10,3 +10,8 @@ data class Game(
     val isActive: Boolean = true,
     val currentRound: Int = 1
 )
+data class GameWithPlayers(
+    @Embedded val game: Game,
+    @Relation(parentColumn = "id", entityColumn = "gameId")
+    val players: List<Player>
+)
