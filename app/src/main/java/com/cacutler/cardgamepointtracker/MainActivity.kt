@@ -2,36 +2,23 @@ package com.cacutler.cardgamepointtracker
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.cacutler.cardgamepointtracker.ui.theme.CardGamePointTrackerTheme
-class MainActivity : ComponentActivity() {
+import com.cacutler.cardgamepointtracker.navigation.AppNavigation
+import com.cacutler.cardgamepointtracker.ui.theme.PointTrackerTheme
+class MainActivity: ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        val application = application as PointTrackerApplication
+        val repository = application.repository
         setContent {
-            CardGamePointTrackerTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(name = "Android", modifier = Modifier.padding(innerPadding))
+            PointTrackerTheme {
+                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                    AppNavigation(repository = repository)
                 }
             }
         }
-    }
-}
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(text = "Hello $name!", modifier = modifier)
-}
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    CardGamePointTrackerTheme {
-        Greeting("Android")
     }
 }
