@@ -1,5 +1,5 @@
 package com.cacutler.cardgamepointtracker.ui.screens
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -113,7 +113,12 @@ fun GameScreen(viewModel: GameViewModel, repository: GameRepository, onNavigateB
                             showScoreSheet = true
                         }
                     },
-                    viewModel = viewModel
+                    onRemovePlayer = {
+                        viewModel.removePlayer(player)
+                    },
+                    viewModel = viewModel,
+                    repository = repository,
+                    playerCount = players.size
                 )
             }
         }
@@ -172,16 +177,28 @@ fun GameScreen(viewModel: GameViewModel, repository: GameRepository, onNavigateB
             }
         )
     }
+    if (showAddPlayerDialog) {
+        AddPlayerDialog(
+            onDismiss = {showAddPlayerDialog = false},
+            onAddPlayer = {name ->
+                viewModel.addPlayer(name)
+                showAddPlayerDialog = false
+            }
+        )
+    }
 }
 @Composable
-fun PlayerRow(player: Player, isActive: Boolean, currentRound: Int, isWinner: Boolean, onPlayerClick: () -> Unit, viewModel: GameViewModel) {
+fun PlayerRow(player: Player, isActive: Boolean, currentRound: Int, isWinner: Boolean, onPlayerClick: () -> Unit, onRemovePlayer: () -> Unit, viewModel: GameViewModel, repository: GameRepository, playerCount: Int) {
     var roundTotal by remember {mutableIntStateOf(0)}
+    var showRemoveDialog by remember {mutableStateOf(false)}
+    var showRoundDetail by remember {mutableStateOf(false)}
+    var showMinPlayerWarning by remember {mutableStateOf(false)}
     LaunchedEffect(player.id, currentRound) {
         if (isActive) {
             roundTotal = viewModel.getTotalForRound(player.id, currentRound)
         }
     }
-    Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).clickable(onClick = onPlayerClick, enabled = isActive)) {
+    Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).combinedClickable(onClick = onPlayerClick, onLongClick = {showRoundDetail = true}, enabled = isActive)) {
         Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(player.name, style = MaterialTheme.typography.titleMedium)
@@ -190,6 +207,7 @@ fun PlayerRow(player: Player, isActive: Boolean, currentRound: Int, isWinner: Bo
                         Text("Winner!", style = MaterialTheme.typography.bodySmall, color = Color.Green)
                     }
                     if (isActive && roundTotal != 0) {
+                        if (isWinner) {Spacer(modifier = Modifier.width(8.dp))}
                         Text("This round: ${if (roundTotal > 0) "+" else ""}$roundTotal", style = MaterialTheme.typography.bodySmall, color = if (roundTotal > 0) Color.Blue else Color.Red)
                     }
                 }
@@ -199,7 +217,92 @@ fun PlayerRow(player: Player, isActive: Boolean, currentRound: Int, isWinner: Bo
                 IconButton(onClick = onPlayerClick) {
                     Icon(Icons.Default.Add, "Add score")
                 }
+                IconButton(onClick = {if (playerCount > 2) {showRemoveDialog = true} else {showMinPlayerWarning = true}}) {
+                    Icon(Icons.Default.Delete, "Remove player", tint = if (playerCount > 2) {MaterialTheme.colorScheme.error} else {MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)})
+                }
             }
         }
     }
+    if (showRemoveDialog) {
+        AlertDialog(
+            onDismissRequest = {showRemoveDialog = false},
+            title = {Text("Remove Player?")},
+            text = {Text("Remove ${player.name} from this game? Their scores will be deleted.")},
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onRemovePlayer()
+                        showRemoveDialog = false
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Remove")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRemoveDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+    if (showMinPlayerWarning) {
+        AlertDialog(onDismissRequest = {showMinPlayerWarning = false}, title = {Text("Cannot Remove Player")}, text = {Text("A game must have at least 2 players. Add more players before removing ${player.name}.")}, confirmButton = {TextButton(onClick = { showMinPlayerWarning = false }) {Text("OK")}})
+    }
+    if (showRoundDetail) {
+        RoundDetailDialog(player = player, round = currentRound, repository = repository, onDismiss = {showRoundDetail = false})
+    }
+}
+@Composable
+fun AddPlayerDialog(onDismiss: () -> Unit, onAddPlayer: (String) -> Unit) {
+    var playerName by remember {mutableStateOf("")}
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {Text("Add Player")},
+        text = {OutlinedTextField(value = playerName, onValueChange = {playerName = it}, label = {Text("Player Name")}, singleLine = true)},
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (playerName.isNotBlank()) {
+                        onAddPlayer(playerName.trim())
+                    }
+                },
+                enabled = playerName.isNotBlank()
+            ) {
+                Text("Add")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+@Composable
+fun RoundDetailDialog(player: Player, round: Int, repository: GameRepository, onDismiss: () -> Unit) {
+    val scores by repository.getScoresForRound(player.id, round).collectAsState(initial = emptyList())
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {Text("${player.name} - Round $round")},
+        text = {
+            Column {
+                if (scores.isEmpty()) {
+                    Text("No scores entered this round")
+                } else {
+                    scores.forEach {scoreEntry ->
+                        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(text = if (scoreEntry.points >= 0) {"+${scoreEntry.points}"} else {"${scoreEntry.points}"}, style = MaterialTheme.typography.bodyLarge)
+                        }
+                    }
+                    Divider(modifier = Modifier.padding(vertical = 8.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Total:", style = MaterialTheme.typography.titleMedium)
+                        Text("${scores.sumOf { it.points }}", style = MaterialTheme.typography.titleMedium)
+                    }
+                }
+            }
+        },
+        confirmButton = {TextButton(onClick = onDismiss) {Text("Close")} }
+    )
 }

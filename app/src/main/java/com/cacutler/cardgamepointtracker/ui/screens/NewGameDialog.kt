@@ -15,56 +15,60 @@ import androidx.compose.ui.unit.dp
 fun NewGameDialog(onDismiss: () -> Unit, onCreateGame: (String, List<String>) -> Unit) {
     var gameName by remember {mutableStateOf("")}
     var playerNames by remember {mutableStateOf(listOf("", ""))}
-    val isValid = gameName.trim().isNotEmpty() && playerNames.count {it.trim().isNotEmpty()} >= 2
+    var showError by remember {mutableStateOf(false)}
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {Text("New Game")},
         text = {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text("Game Details", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
-                OutlinedTextField(value = gameName, onValueChange = {gameName = it}, label = {Text("Game Name")}, modifier = Modifier.fillMaxWidth(), singleLine = true)
+            Column {
+                OutlinedTextField(value = gameName, onValueChange = {gameName = it}, label = {Text("Game Name")}, singleLine = true, modifier = Modifier.fillMaxWidth())
                 Spacer(modifier = Modifier.height(16.dp))
-                Text("Players", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
-                LazyColumn(modifier = Modifier.heightIn(max = 200.dp)) {
-                    itemsIndexed(playerNames) { index, name ->
-                        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                            OutlinedTextField(
-                                value = name,
-                                onValueChange = {newName ->
-                                    playerNames = playerNames.toMutableList().apply {
-                                        this[index] = newName
-                                    }
-                                },
-                                label = { Text("Player ${index + 1}") },
-                                modifier = Modifier.weight(1f),
-                                singleLine = true
-                            )
-                            if (playerNames.size > 2) {
-                                IconButton(onClick = {playerNames = playerNames.toMutableList().apply {removeAt(index)}}) {
-                                    Icon(Icons.Default.Delete, "Remove player")
+                Text("Players (minimum 2)", style = MaterialTheme.typography.bodyMedium)
+                Spacer(modifier = Modifier.height(8.dp))
+                playerNames.forEachIndexed {index, name ->
+                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        OutlinedTextField(
+                            value = name,
+                            onValueChange = {newName ->
+                                playerNames = playerNames.toMutableList().apply {
+                                    this[index] = newName
                                 }
+                            },
+                            label = { Text("Player ${index + 1}") },
+                            singleLine = true,
+                            modifier = Modifier.weight(1f)
+                        )
+                        if (playerNames.size > 2) {
+                            IconButton(onClick = {playerNames = playerNames.toMutableList().apply {removeAt(index)}}) {
+                                Icon(Icons.Default.Delete, "Remove player", tint = MaterialTheme.colorScheme.error)
                             }
                         }
                     }
-                    item {
-                        TextButton(onClick = {playerNames = playerNames + ""}, modifier = Modifier.fillMaxWidth()) {
-                            Icon(Icons.Default.Add, "Add player")
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Add Player")
-                        }
-                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+                TextButton(onClick = {playerNames = playerNames + ""}) {
+                    Icon(Icons.Default.Add, null)
+                    Spacer(Modifier.width(4.dp))
+                    Text("Add Player")
+                }
+                if (showError) {
+                    Text("Please enter a game name and at least 2 unique player names", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp))
                 }
             }
         },
         confirmButton = {
             TextButton(
                 onClick = {
-                    val validNames = playerNames.map {it.trim()}.filter {it.isNotEmpty()}
-                    onCreateGame(gameName, validNames)
-                },
-                enabled = isValid
+                    val validPlayers = playerNames.map {it.trim()}.filter {it.isNotBlank()}.distinct()
+                    if (gameName.isNotBlank() && validPlayers.size >= 2) {
+                        onCreateGame(gameName.trim(), validPlayers)
+                        showError = false
+                    } else {
+                        showError = true
+                    }
+                }
             ) {
-                Text("Start")
+                Text("Create")
             }
         },
         dismissButton = {
