@@ -1,5 +1,6 @@
 package com.cacutler.cardgamepointtracker.navigation
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -22,15 +23,15 @@ sealed class Screen(val route: String) {
 fun AppNavigation(repository: GameRepository, navController: NavHostController = rememberNavController()) {
     NavHost(navController = navController, startDestination = Screen.Main.route) {
         composable(Screen.Main.route) {
-            val viewModel = MainViewModel(repository)
-            MainScreen(viewModel = viewModel, onNavigateToGame = {gameId -> navController.navigate(Screen.Game.createRoute(gameId))})
+            val viewModel: MainViewModel = viewModel(factory = MainViewModelFactory(repository))
+            MainScreen(viewModel = viewModel, onNavigateToGame = {gameId -> navController.navigate(Screen.Game.createRoute(gameId)) })
         }
-        composable(route = Screen.Game.route, arguments = listOf(navArgument("gameId") {type = NavType.StringType})) {backStackEntry ->
+        composable(route = Screen.Game.route, arguments = listOf(navArgument("gameId") { type = NavType.StringType })) { backStackEntry ->
             val gameId = backStackEntry.arguments?.getString("gameId") ?: return@composable
-            val viewModel = GameViewModel(repository, gameId)
+            val viewModel: GameViewModel = viewModel(factory = GameViewModelFactory(repository, gameId))
             GameScreen(viewModel = viewModel, onNavigateBack = {navController.popBackStack()}, onNavigateToHistory = {navController.navigate(Screen.RoundHistory.createRoute(gameId))}, repository = repository)
         }
-        composable(route = Screen.RoundHistory.route, arguments = listOf(navArgument("gameId") {type = NavType.StringType})) {backStackEntry ->
+        composable(route = Screen.RoundHistory.route, arguments = listOf(navArgument("gameId") {type = NavType.StringType})) { backStackEntry ->
             val gameId = backStackEntry.arguments?.getString("gameId") ?: return@composable
             RoundHistoryScreen(repository = repository, gameId = gameId, onNavigateBack = {navController.popBackStack()})
         }
