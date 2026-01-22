@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -256,28 +257,7 @@ fun PlayerRow(player: Player, isActive: Boolean, currentRound: Int, isWinner: Bo
 @Composable
 fun AddPlayerDialog(onDismiss: () -> Unit, onAddPlayer: (String) -> Unit) {
     var playerName by remember {mutableStateOf("")}
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {Text("Add Player")},
-        text = {OutlinedTextField(value = playerName, onValueChange = {playerName = it}, label = {Text("Player Name")}, singleLine = true)},
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    if (playerName.isNotBlank()) {
-                        onAddPlayer(playerName.trim())
-                    }
-                },
-                enabled = playerName.isNotBlank()
-            ) {
-                Text("Add")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
+    AlertDialog(onDismissRequest = onDismiss, title = {Text("Add Player")}, text = {OutlinedTextField(value = playerName, onValueChange = {playerName = it}, label = {Text("Player Name")}, singleLine = true)}, confirmButton = {TextButton(onClick = {if (playerName.isNotBlank()) {onAddPlayer(playerName.trim())}}, enabled = playerName.isNotBlank()) {Text("Add")}}, dismissButton = {TextButton(onClick = onDismiss) {Text("Cancel")}})
 }
 @Composable
 fun RoundDetailDialog(player: Player, round: Int, repository: GameRepository, onDismiss: () -> Unit) {
@@ -295,7 +275,7 @@ fun RoundDetailDialog(player: Player, round: Int, repository: GameRepository, on
                             Text(text = if (scoreEntry.points >= 0) {"+${scoreEntry.points}"} else {"${scoreEntry.points}"}, style = MaterialTheme.typography.bodyLarge)
                         }
                     }
-                    Divider(modifier = Modifier.padding(vertical = 8.dp))
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text("Total:", style = MaterialTheme.typography.titleMedium)
                         Text("${scores.sumOf { it.points }}", style = MaterialTheme.typography.titleMedium)
