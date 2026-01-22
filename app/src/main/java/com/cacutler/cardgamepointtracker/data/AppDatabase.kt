@@ -1,5 +1,6 @@
 package com.cacutler.cardgamepointtracker.data
 import android.content.Context
+import androidx.annotation.VisibleForTesting
 import androidx.room.*
 @Database(entities = [Game::class, Player::class, ScoreEntry::class, Round::class], version = 1, exportSchema = false)
 abstract class AppDatabase: RoomDatabase() {
@@ -16,6 +17,11 @@ abstract class AppDatabase: RoomDatabase() {
                 INSTANCE = instance
                 instance
             }
+        }
+        @VisibleForTesting
+        fun clearInstance() {
+            INSTANCE?.close()
+            INSTANCE = null
         }
     }
 }
