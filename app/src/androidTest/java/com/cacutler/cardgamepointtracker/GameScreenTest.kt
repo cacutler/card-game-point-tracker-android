@@ -51,10 +51,6 @@ class GameScreenTest {
     fun tearDown() = runBlocking {// IMPORTANT: Cancel ViewModel jobs before closing database
         try {// Give any pending operations a moment to complete
             kotlinx.coroutines.delay(100)
-            // If ViewModel has an onCleared method, it will be called
-            // when the test finishes, but we need to ensure it happens
-            // The ViewModel's viewModelScope will be cancelled automatically
-            // when the ViewModel is garbage collected, but we can force it
             database.close()// Close the database
             AppDatabase.clearInstance()// Clear the singleton
             val context = InstrumentationRegistry.getInstrumentation().targetContext// Delete the database file
@@ -67,300 +63,152 @@ class GameScreenTest {
     @Test
     fun gameScreen_displaysPlayers() {
         composeTestRule.setContent {
-            GameScreen(
-                viewModel = viewModel,
-                repository = repository,
-                onNavigateBack = {},
-                onNavigateToHistory = {}
-            )
+            GameScreen(viewModel = viewModel, repository = repository, onNavigateBack = {}, onNavigateToHistory = {})
         }
-
-        // Give compose time to render
-        composeTestRule.waitForIdle()
-
-        // Debug: Print the UI tree
-        composeTestRule.onRoot().printToLog("UI_TREE")
-
-        // First, wait for any content to appear (the game name in the top bar)
-        composeTestRule.waitUntil(timeoutMillis = 10000) {
+        composeTestRule.waitForIdle()// Give compose time to render
+        composeTestRule.waitUntil(timeoutMillis = 10000) {// First, wait for any content to appear (the game name in the top bar)
             try {
-                composeTestRule.onAllNodesWithText("Test Game", useUnmergedTree = true)
-                    .fetchSemanticsNodes().isNotEmpty()
+                composeTestRule.onAllNodesWithText("Test Game", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
             } catch (e: Exception) {
-                println("TEST: Waiting for Test Game title... ${e.message}")
                 false
             }
         }
-
-        // Now wait for Alice
-        composeTestRule.waitUntil(timeoutMillis = 10000) {
+        composeTestRule.waitUntil(timeoutMillis = 10000) {// Now wait for Alice
             try {
-                val nodes = composeTestRule.onAllNodesWithText("Alice", useUnmergedTree = true)
-                    .fetchSemanticsNodes()
-                println("TEST: Found ${nodes.size} nodes with 'Alice'")
+                val nodes = composeTestRule.onAllNodesWithText("Alice", useUnmergedTree = true).fetchSemanticsNodes()
                 nodes.isNotEmpty()
             } catch (e: Exception) {
-                println("TEST: Error finding Alice: ${e.message}")
                 false
             }
         }
-
         composeTestRule.onNodeWithText("Alice", useUnmergedTree = true).assertIsDisplayed()
         composeTestRule.onNodeWithText("Bob", useUnmergedTree = true).assertIsDisplayed()
     }
-
     @Test
     fun gameScreen_displaysRound() {
         composeTestRule.setContent {
-            GameScreen(
-                viewModel = viewModel,
-                repository = repository,
-                onNavigateBack = {},
-                onNavigateToHistory = {}
-            )
+            GameScreen(viewModel = viewModel, repository = repository, onNavigateBack = {}, onNavigateToHistory = {})
         }
-
         composeTestRule.waitForIdle()
-
         composeTestRule.waitUntil(timeoutMillis = 10000) {
-            composeTestRule.onAllNodesWithText("Round 1", useUnmergedTree = true)
-                .fetchSemanticsNodes().isNotEmpty()
+            composeTestRule.onAllNodesWithText("Round 1", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
         }
-
         composeTestRule.onNodeWithText("Round 1", useUnmergedTree = true).assertIsDisplayed()
     }
-
     @Test
     fun gameScreen_opensScoreSheet_whenPlayerClicked() {
         composeTestRule.setContent {
-            GameScreen(
-                viewModel = viewModel,
-                repository = repository,
-                onNavigateBack = {},
-                onNavigateToHistory = {}
-            )
+            GameScreen(viewModel = viewModel, repository = repository, onNavigateBack = {}, onNavigateToHistory = {})
         }
-
         composeTestRule.waitForIdle()
-
-        // Wait for players to load
-        composeTestRule.waitUntil(timeoutMillis = 10000) {
-            composeTestRule.onAllNodesWithText("Alice", useUnmergedTree = true)
-                .fetchSemanticsNodes().isNotEmpty()
+        composeTestRule.waitUntil(timeoutMillis = 10000) {// Wait for players to load
+            composeTestRule.onAllNodesWithText("Alice", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
         }
-
-        // Click on Alice's row
-        composeTestRule.onAllNodesWithText("Alice", useUnmergedTree = true)[0].performClick()
-
-        // Verify score sheet is shown
-        composeTestRule.waitUntil(timeoutMillis = 5000) {
-            composeTestRule.onAllNodesWithText("Quick Add", useUnmergedTree = true)
-                .fetchSemanticsNodes().isNotEmpty()
+        composeTestRule.onAllNodesWithText("Alice", useUnmergedTree = true)[0].performClick()// Click on Alice's row
+        composeTestRule.waitUntil(timeoutMillis = 5000) {// Verify score sheet is shown
+            composeTestRule.onAllNodesWithText("Quick Add", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
         }
         composeTestRule.onNodeWithText("Quick Add", useUnmergedTree = true).assertIsDisplayed()
     }
-
     @Test
     fun gameScreen_addsScore_usingQuickAdd() {
         composeTestRule.setContent {
-            GameScreen(
-                viewModel = viewModel,
-                repository = repository,
-                onNavigateBack = {},
-                onNavigateToHistory = {}
-            )
+            GameScreen(viewModel = viewModel, repository = repository, onNavigateBack = {}, onNavigateToHistory = {})
         }
-
         composeTestRule.waitForIdle()
-
-        // Wait for players to load
-        composeTestRule.waitUntil(timeoutMillis = 10000) {
-            composeTestRule.onAllNodesWithText("Alice", useUnmergedTree = true)
-                .fetchSemanticsNodes().isNotEmpty()
+        composeTestRule.waitUntil(timeoutMillis = 10000) {// Wait for players to load
+            composeTestRule.onAllNodesWithText("Alice", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
         }
-
-        // Open score sheet for Alice
-        composeTestRule.onAllNodesWithText("Alice", useUnmergedTree = true)[0].performClick()
-
-        // Wait for score sheet to open
-        composeTestRule.waitUntil(timeoutMillis = 5000) {
-            composeTestRule.onAllNodesWithText("+10", useUnmergedTree = true)
-                .fetchSemanticsNodes().isNotEmpty()
+        composeTestRule.onAllNodesWithText("Alice", useUnmergedTree = true)[0].performClick()// Open score sheet for Alice
+        composeTestRule.waitUntil(timeoutMillis = 5000) {// Wait for score sheet to open
+            composeTestRule.onAllNodesWithText("+10", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
         }
-
-        // Click quick add button for 10 points
-        composeTestRule.onNodeWithText("+10", useUnmergedTree = true).performClick()
-
-        // Wait for sheet to close and score to update
-        composeTestRule.waitUntil(timeoutMillis = 5000) {
+        composeTestRule.onNodeWithText("+10", useUnmergedTree = true).performClick()// Click quick add button for 10 points
+        composeTestRule.waitUntil(timeoutMillis = 5000) {// Wait for sheet to close and score to update
             composeTestRule.onAllNodesWithText("10", useUnmergedTree = true)
                 .fetchSemanticsNodes().isNotEmpty()
         }
     }
-
     @Test
     fun gameScreen_showsNextRoundDialog() {
         composeTestRule.setContent {
-            GameScreen(
-                viewModel = viewModel,
-                repository = repository,
-                onNavigateBack = {},
-                onNavigateToHistory = {}
-            )
+            GameScreen(viewModel = viewModel, repository = repository, onNavigateBack = {}, onNavigateToHistory = {})
         }
-
         composeTestRule.waitForIdle()
-
-        // Wait for screen to load
-        composeTestRule.waitUntil(timeoutMillis = 10000) {
-            composeTestRule.onAllNodesWithText("Next Round", useUnmergedTree = true)
-                .fetchSemanticsNodes().isNotEmpty()
+        composeTestRule.waitUntil(timeoutMillis = 10000) {// Wait for screen to load
+            composeTestRule.onAllNodesWithText("Next Round", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
         }
-
         composeTestRule.onNodeWithText("Next Round", useUnmergedTree = true).performClick()
-
         composeTestRule.waitUntil(timeoutMillis = 5000) {
-            composeTestRule.onAllNodesWithText("Start Next Round?", useUnmergedTree = true)
-                .fetchSemanticsNodes().isNotEmpty()
+            composeTestRule.onAllNodesWithText("Start Next Round?", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
         }
-
         composeTestRule.onNodeWithText("Start Next Round?", useUnmergedTree = true).assertIsDisplayed()
-        composeTestRule.onNodeWithText("Round 1 will be complete and Round 2 will begin.", useUnmergedTree = true)
-            .assertIsDisplayed()
+        composeTestRule.onNodeWithText("Round 1 will be complete and Round 2 will begin.", useUnmergedTree = true).assertIsDisplayed()
     }
-
     @Test
     fun gameScreen_advancesRound_whenConfirmed() {
         composeTestRule.setContent {
-            GameScreen(
-                viewModel = viewModel,
-                repository = repository,
-                onNavigateBack = {},
-                onNavigateToHistory = {}
-            )
+            GameScreen(viewModel = viewModel, repository = repository, onNavigateBack = {}, onNavigateToHistory = {})
         }
-
         composeTestRule.waitForIdle()
-
-        // Wait for screen to load
-        composeTestRule.waitUntil(timeoutMillis = 10000) {
+        composeTestRule.waitUntil(timeoutMillis = 10000) {// Wait for screen to load
             composeTestRule.onAllNodesWithText("Next Round", useUnmergedTree = true)
                 .fetchSemanticsNodes().isNotEmpty()
         }
-
-        // Open next round dialog
-        composeTestRule.onNodeWithText("Next Round", useUnmergedTree = true).performClick()
-
-        // Wait for dialog
-        composeTestRule.waitUntil(timeoutMillis = 5000) {
-            composeTestRule.onAllNodesWithText("Next Round", useUnmergedTree = true)
-                .fetchSemanticsNodes().size > 1
+        composeTestRule.onNodeWithText("Next Round", useUnmergedTree = true).performClick()// Open next round dialog
+        composeTestRule.waitUntil(timeoutMillis = 5000) {// Wait for dialog
+            composeTestRule.onAllNodesWithText("Next Round", useUnmergedTree = true).fetchSemanticsNodes().size > 1
         }
-
-        // Confirm (use index 1 for the button in the dialog)
-        composeTestRule.onAllNodesWithText("Next Round", useUnmergedTree = true)[1].performClick()
-
-        // Verify round changed
-        composeTestRule.waitUntil(timeoutMillis = 5000) {
-            composeTestRule.onAllNodesWithText("Round 2", useUnmergedTree = true)
-                .fetchSemanticsNodes().isNotEmpty()
+        composeTestRule.onAllNodesWithText("Next Round", useUnmergedTree = true)[1].performClick()// Confirm (use index 1 for the button in the dialog)
+        composeTestRule.waitUntil(timeoutMillis = 5000) {// Verify round changed
+            composeTestRule.onAllNodesWithText("Round 2", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
         }
     }
-
     @Test
     fun gameScreen_canAddPlayer() {
         composeTestRule.setContent {
-            GameScreen(
-                viewModel = viewModel,
-                repository = repository,
-                onNavigateBack = {},
-                onNavigateToHistory = {}
-            )
+            GameScreen(viewModel = viewModel, repository = repository, onNavigateBack = {}, onNavigateToHistory = {})
         }
-
         composeTestRule.waitForIdle()
-
-        // Wait for screen to load
-        composeTestRule.waitUntil(timeoutMillis = 10000) {
+        composeTestRule.waitUntil(timeoutMillis = 10000) {// Wait for screen to load
             composeTestRule.onAllNodesWithContentDescription("More")
                 .fetchSemanticsNodes().isNotEmpty()
         }
-
-        // Open menu
-        composeTestRule.onNodeWithContentDescription("More").performClick()
-
-        // Wait for menu and click Add Player
-        composeTestRule.waitUntil(timeoutMillis = 2000) {
-            composeTestRule.onAllNodesWithText("Add Player", useUnmergedTree = true)
-                .fetchSemanticsNodes().isNotEmpty()
+        composeTestRule.onNodeWithContentDescription("More").performClick()// Open menu
+        composeTestRule.waitUntil(timeoutMillis = 2000) {// Wait for menu and click Add Player
+            composeTestRule.onAllNodesWithText("Add Player", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
         }
-
         composeTestRule.onNodeWithText("Add Player", useUnmergedTree = true).performClick()
-
-        // Wait for the dialog's Cancel button to appear (unique to dialog)
-        composeTestRule.waitUntil(timeoutMillis = 3000) {
+        composeTestRule.waitUntil(timeoutMillis = 3000) {// Wait for the dialog's Cancel button to appear (unique to dialog)
             composeTestRule.onAllNodesWithText("Cancel", useUnmergedTree = true)
                 .fetchSemanticsNodes().isNotEmpty()
         }
-
         composeTestRule.waitForIdle()
-
-        // Find and interact with the text field
-        val textFields = composeTestRule.onAllNodes(
-            hasSetTextAction(),
-            useUnmergedTree = true
-        )
-
-        // Click and type in the text field
-        textFields[0].performClick()
+        val textFields = composeTestRule.onAllNodes(hasSetTextAction(), useUnmergedTree = true)// Find and interact with the text field
+        textFields[0].performClick()// Click and type in the text field
         textFields[0].performTextInput("Charlie")
-
         composeTestRule.waitForIdle()
-
-        // Click the Add button in the dialog
-        // Get all buttons with "Add" text, filter to find the one that's enabled
-        val addButtons = composeTestRule.onAllNodesWithText("Add", useUnmergedTree = true)
+        val addButtons = composeTestRule.onAllNodesWithText("Add", useUnmergedTree = true)// Click the Add button in the dialog.  Get all buttons with "Add" text, filter to find the one that's enabled
         val addButtonCount = addButtons.fetchSemanticsNodes().size
-
-        // The dialog Add button should be the last one
-        addButtons[addButtonCount - 1].performClick()
-
-        // Verify player appears
-        composeTestRule.waitUntil(timeoutMillis = 5000) {
-            composeTestRule.onAllNodesWithText("Charlie", useUnmergedTree = true)
-                .fetchSemanticsNodes().isNotEmpty()
+        addButtons[addButtonCount - 1].performClick()// The dialog Add button should be the last one
+        composeTestRule.waitUntil(timeoutMillis = 5000) {// Verify player appears
+            composeTestRule.onAllNodesWithText("Charlie", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
         }
     }
-
     @Test
     fun gameScreen_preventsDeletingLastTwoPlayers() {
         composeTestRule.setContent {
-            GameScreen(
-                viewModel = viewModel,
-                repository = repository,
-                onNavigateBack = {},
-                onNavigateToHistory = {}
-            )
+            GameScreen(viewModel = viewModel, repository = repository, onNavigateBack = {}, onNavigateToHistory = {})
         }
-
         composeTestRule.waitForIdle()
-
-        // Wait for players to load
-        composeTestRule.waitUntil(timeoutMillis = 10000) {
-            composeTestRule.onAllNodesWithContentDescription("Remove player")
-                .fetchSemanticsNodes().isNotEmpty()
+        composeTestRule.waitUntil(timeoutMillis = 10000) {// Wait for players to load
+            composeTestRule.onAllNodesWithContentDescription("Remove player").fetchSemanticsNodes().isNotEmpty()
         }
-
-        // Try to delete a player (should show warning since only 2 players)
-        composeTestRule.onAllNodesWithContentDescription("Remove player")[0].performClick()
-
+        composeTestRule.onAllNodesWithContentDescription("Remove player")[0].performClick()// Try to delete a player (should show warning since only 2 players)
         composeTestRule.waitUntil(timeoutMillis = 5000) {
-            composeTestRule.onAllNodesWithText("Cannot Remove Player", useUnmergedTree = true)
-                .fetchSemanticsNodes().isNotEmpty()
+            composeTestRule.onAllNodesWithText("Cannot Remove Player", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
         }
-
         composeTestRule.onNodeWithText("Cannot Remove Player", useUnmergedTree = true).assertIsDisplayed()
-        composeTestRule.onNodeWithText("A game must have at least 2 players. Add more players before removing Alice.", useUnmergedTree = true)
-            .assertIsDisplayed()
+        composeTestRule.onNodeWithText("A game must have at least 2 players. Add more players before removing Alice.", useUnmergedTree = true).assertIsDisplayed()
     }
 }
